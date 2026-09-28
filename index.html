@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculateur de TJM freelance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F6; --panel:#FFFFFF; --ink:#16213A; --muted:#5A6579; --line:#D5DBE6;
+  --hero:#16213A; --hero-ink:#F4F6FB; --net:#12806F; --charges:#E0A030; --frais:#8A94A8; --focus:#2F4BFF;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F141E; --panel:#182030; --ink:#E8ECF4; --muted:#9AA5BA; --line:#2A3448;
+    --hero:#22325A; --hero-ink:#F4F6FB; --net:#3DBDA8; --charges:#E8B04E; --frais:#8A94A8; --focus:#8DA0FF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F141E; --panel:#182030; --ink:#E8ECF4; --muted:#9AA5BA; --line:#2A3448;
+  --hero:#22325A; --hero-ink:#F4F6FB; --net:#3DBDA8; --charges:#E8B04E; --frais:#8A94A8; --focus:#8DA0FF;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+main{max-width:980px;margin:0 auto;padding:28px 18px 48px}
+h1{font-family:"Bricolage Grotesque",Georgia,serif;font-size:clamp(1.7rem,4.5vw,2.5rem);line-height:1.1;margin:0 0 8px;font-weight:700}
+.lead{color:var(--muted);margin:0 0 26px;max-width:58ch}
+.grid{display:grid;gap:18px;grid-template-columns:1fr}
+@media(min-width:800px){.grid{grid-template-columns:1.05fr .95fr;align-items:start}.result{position:sticky;top:18px}}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+fieldset{border:0;padding:0;margin:0 0 20px}
+legend{font-weight:600;margin-bottom:10px;padding:0}
+.field{margin-bottom:14px}
+label{display:block;font-size:.92rem;margin-bottom:4px}
+.hint{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
+input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+details{border-top:1px solid var(--line);padding-top:14px}
+summary{cursor:pointer;font-weight:600;padding:2px 0}
+summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.result{background:var(--hero);color:var(--hero-ink);border-radius:12px;padding:24px}
+.result p{margin:0}
+.kicker{opacity:.8;font-size:.9rem}
+.big{font-family:"Bricolage Grotesque",Georgia,serif;font-weight:700;font-size:clamp(3.2rem,11vw,5rem);line-height:1;margin:6px 0 2px;letter-spacing:-.02em}
+.sub{opacity:.85;font-size:.95rem}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0;padding-top:16px;border-top:1px solid rgba(255,255,255,.2)}
+.stats b{display:block;font-size:1.15rem}
+.stats span{opacity:.75;font-size:.82rem}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.15)}
+.bar i{display:block;transition:width .25s}
+.legend{list-style:none;margin:12px 0 0;padding:0;font-size:.88rem;display:grid;gap:6px}
+.legend li{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.legend em{margin-left:auto;font-style:normal;font-weight:600}
+.err{background:#FBE3E3;color:#7A1414;border-radius:8px;padding:10px 12px;font-size:.9rem;display:none;margin-bottom:12px}
+.note{color:var(--muted);font-size:.8rem;margin-top:22px;max-width:70ch}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Quel TJM faut-il facturer pour vivre de son activité ?</h1>
+  <p class="lead">Indique le revenu net que tu veux, tes frais et ton rythme de travail. Le calcul se met à jour tout seul.</p>
+
+  <div class="grid">
+    <form class="form" onsubmit="return false" aria-label="Paramètres du calcul">
+      <fieldset>
+        <legend>Ton objectif</legend>
+        <div class="field">
+          <label for="net">Revenu net souhaité par mois (€)</label>
+          <input id="net" type="number" inputmode="decimal" min="0" step="50" value="3000">
+          <span class="hint">Ce que tu veux toucher pour toi, une fois tout payé.</span>
+        </div>
+        <div class="field">
+          <label for="jours">Jours travaillés par semaine</label>
+          <input id="jours" type="number" inputmode="decimal" min="1" max="7" step="0.5" value="5">
+        </div>
+      </fieldset>
+      <details>
+        <summary>Plus d'options</summary>
+        <p class="hint" style="margin:10px 0 14px">Déjà réglées sur des valeurs courantes : tu peux ne rien changer.</p>
+        <div class="field">
+          <label for="frais">Frais professionnels par mois (€)</label>
+          <input id="frais" type="number" inputmode="decimal" min="0" step="10" value="150">
+          <span class="hint">Logiciels, matériel, assurance, comptable, coworking…</span>
+        </div>
+        <div class="field">
+          <label for="charges">Charges sociales et impôts sur l'activité (% du chiffre d'affaires)</label>
+          <input id="charges" type="number" inputmode="decimal" min="0" max="90" step="0.5" value="25">
+          <span class="hint">Valeur indicative : ajuste-la selon ton statut (micro-entreprise, société…).</span>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="conges">Semaines de congés par an</label>
+            <input id="conges" type="number" inputmode="decimal" min="0" max="52" step="1" value="5">
+          </div>
+          <div class="field">
+            <label for="feries">Jours fériés par an</label>
+            <input id="feries" type="number" inputmode="decimal" min="0" max="30" step="1" value="8">
+          </div>
+        </div>
+        <div class="field">
+          <label for="nonfact">Temps non facturable (%)</label>
+          <input id="nonfact" type="number" inputmode="decimal" min="0" max="90" step="5" value="20">
+          <span class="hint">Prospection, admin, formation, jours creux.</span>
+        </div>
+      </details>
+    </form>
+
+    <section class="result" aria-live="polite">
+      <div class="err" id="err" role="alert"></div>
+      <p class="kicker">Ton TJM minimum</p>
+      <p class="big"><span id="tjm">–</span> €</p>
+      <p class="sub" id="conseil">–</p>
+
+      <div class="stats">
+        <div><b id="ca">–</b><span>chiffre d'affaires annuel à viser</span></div>
+        <div><b id="jf">–</b><span>jours facturables par an</span></div>
+        <div><b id="th">–</b><span>taux horaire (base 7 h)</span></div>
+        <div><b id="camois">–</b><span>chiffre d'affaires moyen par mois</span></div>
+      </div>
+
+      <div class="bar" role="img" aria-label="Répartition d'un euro facturé"><i id="bn" style="background:var(--net)"></i><i id="bc" style="background:var(--charges)"></i><i id="bf" style="background:var(--frais)"></i></div>
+      <ul class="legend">
+        <li><span class="dot" style="background:var(--net)"></span>Pour toi (net)<em id="ln">–</em></li>
+        <li><span class="dot" style="background:var(--charges)"></span>Charges et impôts<em id="lc">–</em></li>
+        <li><span class="dot" style="background:var(--frais)"></span>Frais professionnels<em id="lf">–</em></li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="note">Estimation simplifiée à titre indicatif. Elle ne tient pas compte des spécificités de ton statut (abattements, TVA, impôt sur le revenu…) et ne remplace pas l'avis d'un expert-comptable.</p>
+</main>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var eur=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0});
+  var pct=function(x){return Math.round(x*100)+" %"};
+  var ids=["net","frais","charges","jours","conges","feries","nonfact"];
+  function val(id){var v=parseFloat($(id).value);return isNaN(v)?0:v}
+  function reset(msg){
+    $("err").textContent=msg;$("err").style.display="block";
+    ["tjm","ca","jf","th","camois","ln","lc","lf"].forEach(function(k){$(k).textContent="–"});
+    $("conseil").textContent="–";["bn","bc","bf"].forEach(function(k){$(k).style.width="0"});
+  }
+  function calc(){
+    var net=val("net"),frais=val("frais"),ch=val("charges")/100,j=val("jours"),cg=val("conges"),fe=val("feries"),nf=val("nonfact")/100;
+    var joursOuvres=(52-cg)*j-fe;
+    var jf=joursOuvres*(1-nf);
+    if(ch>=1){return reset("Les charges doivent être inférieures à 100 %.")}
+    if(jf<=0){return reset("Avec ces paramètres, il ne reste aucun jour facturable. Réduis les congés, les jours fériés ou le temps non facturable.")}
+    $("err").style.display="none";
+    var caAn=(net*12+frais*12)/(1-ch);
+    var tjm=caAn/jf;
+    var partNet=(net*12)/caAn, partFrais=(frais*12)/caAn, partCh=1-partNet-partFrais;
+    $("tjm").textContent=eur.format(Math.ceil(tjm));
+    $("conseil").textContent="En dessous de ce montant, tu n'atteins pas ton revenu net. Vise environ "+eur.format(Math.ceil(tjm*1.1))+" € pour garder une marge de négociation.";
+    $("ca").textContent=eur.format(caAn)+" €";
+    $("jf").textContent=eur.format(Math.round(jf))+" jours";
+    $("th").textContent=eur.format(Math.ceil(tjm/7))+" €/h";
+    $("camois").textContent=eur.format(caAn/12)+" €";
+    $("bn").style.width=(partNet*100)+"%";$("bc").style.width=(partCh*100)+"%";$("bf").style.width=(partFrais*100)+"%";
+    $("ln").textContent=pct(partNet);$("lc").textContent=pct(partCh);$("lf").textContent=pct(partFrais);
+  }
+  ids.forEach(function(id){$(id).addEventListener("input",calc)});
+  calc();
+})();
+</script>
+</body>
+</html>
